@@ -1,31 +1,44 @@
 const mineflayer = require('mineflayer');
+
 const config = {
   host: process.env.SERVER_HOST || 'DarkFlarePlays8.aternos.me',
   port: parseInt(process.env.SERVER_PORT || 37421),
-  username: process.env.BOT_USERNAME || 'IceAFK2025'
+  username: process.env.BOT_USERNAME || 'AFKBot2025',  // Normal username
+  email: process.env.MC_EMAIL,      // Your Minecraft email
+  password: process.env.MC_PASSWORD  // Your Minecraft password
 };
 
 let bot;
 let attempts = 0;
 
 function createBot() {
-  console.log(`🔄 Attempt ${attempts + 1}: ${config.host}:${config.port}`);
+  console.log(`🔄 [${attempts + 1}] Joining ${config.host}:${config.port}`);
   
-  bot = mineflayer.createBot({
+  const options = {
     host: config.host,
     port: config.port,
     username: config.username,
-    auth: 'offline',
-    version: false,  // Auto-detect 1.21.10
-    hideErrors: false
-  });
+    version: false  // Auto 1.21.10
+  };
+
+  // Online mode auth
+  if (config.email && config.password) {
+    options.auth = 'microsoft';
+    options.username = config.email;
+  } else {
+    options.auth = 'offline';
+  }
+
+  bot = mineflayer.createBot(options);
 
   bot.on('spawn', () => {
     attempts = 0;
-    console.log('✅ JOINED SERVER - AFK STARTED!');
+    console.log('✅ SPAWNED - AFK ACTIVE (Public server)');
     
-    bot.chat('/op IceAFK2025');  // Self-op
-    setTimeout(afkLoop, 2000);
+    // Stay out of way
+    bot.chat('AFK Bot keeping server online!');
+    
+    setTimeout(afkMovement, 3000);
   });
 
   bot.on('error', err => {
@@ -33,45 +46,48 @@ function createBot() {
     restart();
   });
 
+  bot.on('kicked', reason => {
+    console.log(`🚫 Kicked: ${reason}`);
+    restart();
+  });
+
   bot.on('end', () => {
-    console.log('⛔️ DISCONNECTED');
+    console.log('⛔️ Disconnected');
     restart();
   });
 }
 
 function restart() {
-  if (attempts < 20) {
-    attempts++;
-    setTimeout(createBot, 5000 * Math.min(attempts, 3));
+  if (attempts++ < 15) {
+    setTimeout(createBot, 5000);
   }
 }
 
 let phase = 0;
-function afkLoop() {
-  if (!bot.entity) return setTimeout(afkLoop, 1000);
+function afkMovement() {
+  if (!bot.entity) return setTimeout(afkMovement, 1000);
   
-  // Random human-like movement
-  const moves = [
-    () => bot.setControlState('forward', true),
-    () => bot.setControlState('back', true),
-    () => bot.setControlState('left', true),
-    () => bot.setControlState('right', true),
-    () => bot.jump()
-  ];
+  // Reset controls
+  bot.setControlState('forward', false);
+  bot.setControlState('back', false);
+  bot.setControlState('left', false);
+  bot.setControlState('right', false);
+  bot.setControlState('jump', false);
   
-  // Reset previous
-  bot.clearControlStates();
-  moves[phase % 5]();
+  // Random subtle movement
+  const actions = ['forward', 'back', 'left', 'right'];
+  const action = actions[phase % 4];
+  bot.setControlState(action, true);
   
-  console.log(`🎮 Move ${phase % 5}`);
+  console.log(`🎮 ${action.toUpperCase()}`);
   phase++;
   
-  setTimeout(() => {
-    bot.clearControlStates();
-    setTimeout(afkLoop, 3000);
-  }, 500);
+  // Stop after 1s, wait 4s
+  setTimeout(() => bot.clearControlStates(), 1000);
+  setTimeout(afkMovement, 5000);
 }
 
-// Start
+// Heartbeat
+setInterval(() => console.log('💓 Bot alive'), 60000);
+
 createBot();
-setInterval(() => console.log('💓 Alive'), 30000);
