@@ -1,10 +1,10 @@
 {
-  "name": "Public-AFK-Bot",
+  "name": "EternalFlareKeepAlive",
   "version": "1.0.0",
   "main": "bot.js",
   "scripts": {"start": "node bot.js"},
   "dependencies": {
-    "mineflayer": "github:PrismarineJS/mineflayer#master"
+    "mineflayer": "4.20.1"
   },
   "engines": {"node": "20.18.0"}
 }
