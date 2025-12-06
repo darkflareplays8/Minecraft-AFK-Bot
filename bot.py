@@ -1,36 +1,40 @@
+import os
 import time
 import random
 from mcstatus import JavaServer
 
+# Railway environment variables
 config = {
-    "host": "DarkFlarePlays8.aternos.me",
-    "port": 37421,
-    "username": "IceAFK2025"
+    "host": os.getenv('SERVER_HOST', 'DarkFlarePlays8.aternos.me'),
+    "port": int(os.getenv('SERVER_PORT', 37421)),
+    "username": os.getenv('BOT_USERNAME', 'IceAFK2025')
 }
 
+print(f"🚀 AFK Bot for {config['host']}:{config['port']}")
+
 def ping_server():
-    server = JavaServer.lookup(f"{config['host']}:{config['port']}")
-    status = server.status()
-    print(f"✅ Server online - {status.players.online}/{status.players.max} players")
-    return status.players.online < status.players.max
+    try:
+        server = JavaServer.lookup(f"{config['host']}:{config['port']}")
+        status = server.status()
+        print(f"✅ Server UP - {status.players.online}/{status.players.max} players")
+        return True
+    except:
+        print("⏳ Server offline - waiting...")
+        return False
 
 def afk_cycle():
-    moves = ["forward", "back", "left", "right", "jump", "sneak"]
-    print(f"🎮 AFK: {moves[random.randint(0, len(moves)-1)]}")
+    moves = ["WALK", "TURN", "JUMP", "SNEAK"]
+    print(f"🎮 AFK: {random.choice(moves)}")
     time.sleep(5)
 
-print("🚀 Simple Python AFK Bot - Railway Ready")
-attempt = 0
+print("Starting infinite AFK loop...")
+cycle = 0
 
 while True:
     if ping_server():
-        print("✅ Server responding - AFK active")
         afk_cycle()
-    else:
-        print("⏳ Server offline - waiting...")
+    time.sleep(10)  # Ping every 10s
     
-    attempt += 1
-    if attempt % 12 == 0:
-        print(f"💓 Alive {attempt//12}min")
-    
-    time.sleep(10)
+    cycle += 1
+    if cycle % 6 == 0:
+        print(f"💓 Alive {cycle//6 * 1}min - Bot active!")
